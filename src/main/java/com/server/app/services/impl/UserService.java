@@ -58,7 +58,7 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
 
         // 🔹 Asignar rol por defecto (ID 1)
-        Role defaultRole = roleRepository.findById(1L)
+        Role defaultRole = roleRepository.findById(2L)
                 .orElseThrow(() -> new RuntimeException("Rol por defecto no encontrado"));
 
         user.setRoles(Set.of(defaultRole));
