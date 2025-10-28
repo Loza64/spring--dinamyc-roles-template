@@ -1,10 +1,10 @@
 package com.server.app.dto.user;
 
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
-
-import java.util.Set;
 
 @Data
 public class UserUpdateDto {
@@ -18,5 +18,7 @@ public class UserUpdateDto {
     @Email(message = "Email no válido")
     private String email;
 
-    private Set<Long> roleIds;
+    // Validación para el rol: si se proporciona, debe ser un ID positivo
+    @Positive(message = "El roleId debe ser un número positivo")
+    private Long roleId;
 }

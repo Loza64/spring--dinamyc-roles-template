@@ -2,9 +2,6 @@ package com.server.app.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.util.Set;
-
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @Table(name = "users")
@@ -42,9 +39,7 @@ public class User {
         }
     }
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
-    @EqualsAndHashCode.Exclude
-    @ToString.Exclude
-    private Set<Role> roles;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "role_id", nullable = false)
+    private Role role; // Un solo rol por usuario
 }

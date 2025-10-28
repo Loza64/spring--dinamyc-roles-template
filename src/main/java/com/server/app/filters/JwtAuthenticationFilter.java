@@ -1,7 +1,6 @@
 package com.server.app.filters;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -71,16 +70,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        Set<GrantedAuthority> authorities = new HashSet<>();
+        Set<GrantedAuthority> authorities = user.getRole().getPermissions().stream()
+                .map(permission -> new SimpleGrantedAuthority(permission.getMethod() + ":" + permission.getPath()))
+                .collect(Collectors.toSet());
 
-        authorities.addAll(
-                user.getRoles().stream()
-                        .flatMap(role -> role.getPermissions().stream()
-                                .map(permission -> new SimpleGrantedAuthority(
-                                        permission.getMethod() + ":" + permission.getPath())))
-                        .collect(Collectors.toSet()));
-
-        user.getRoles().forEach(role -> authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getName())));
+        // Agregar el rol como autoridad
+        authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().getName()));
 
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user, null,
                 authorities);

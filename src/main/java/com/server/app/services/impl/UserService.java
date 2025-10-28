@@ -1,8 +1,6 @@
 package com.server.app.services.impl;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -45,6 +43,7 @@ public class UserService {
         return new AuthResponse(token, user);
     }
 
+    // 🔹 SIGNUP con rol por defecto
     public AuthResponse signUp(UserCreateDto dto) {
         if (userRepository.findByUsername(dto.getUsername()).isPresent()) {
             throw new RuntimeException("El username ya está en uso");
@@ -57,11 +56,10 @@ public class UserService {
         user.setEmail(dto.getEmail());
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
 
-        // 🔹 Asignar rol por defecto (ID 1)
+        // Asignar rol por defecto (ID 2)
         Role defaultRole = roleRepository.findById(2L)
                 .orElseThrow(() -> new RuntimeException("Rol por defecto no encontrado"));
-
-        user.setRoles(Set.of(defaultRole));
+        user.setRole(defaultRole);
 
         userRepository.save(user);
 
@@ -81,6 +79,13 @@ public class UserService {
         user.setEmail(dto.getEmail());
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
 
+        // Asignar rol si se proporciona
+        if (dto.getRoleId() != null) {
+            Role role = roleRepository.findById(dto.getRoleId())
+                    .orElseThrow(() -> new RuntimeException("Rol no encontrado"));
+            user.setRole(role);
+        }
+
         return userRepository.save(user);
     }
 
@@ -93,10 +98,12 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
     }
 
-    public User assignRoles(int userId, Set<Long> roleIds) {
+    // 🔹 Asignar un solo rol
+    public User assignRole(int userId, Long roleId) {
         User user = findById(userId);
-        Set<Role> roles = new HashSet<>(roleRepository.findAllById(roleIds));
-        user.setRoles(roles);
+        Role role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new RuntimeException("Rol no encontrado"));
+        user.setRole(role);
         return userRepository.save(user);
     }
 
@@ -116,10 +123,11 @@ public class UserService {
         if (dto.getEmail() != null)
             user.setEmail(dto.getEmail());
 
-        // Actualizar roles si vienen
-        if (dto.getRoleIds() != null && !dto.getRoleIds().isEmpty()) {
-            Set<Role> roles = new HashSet<>(roleRepository.findAllById(dto.getRoleIds()));
-            user.setRoles(roles);
+        // Actualizar rol si viene
+        if (dto.getRoleId() != null) {
+            Role role = roleRepository.findById(dto.getRoleId())
+                    .orElseThrow(() -> new RuntimeException("Rol no encontrado"));
+            user.setRole(role);
         }
 
         return userRepository.save(user);
