@@ -8,6 +8,7 @@ import com.server.app.repositories.RoleRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -24,14 +25,17 @@ public class RoleService {
         this.permissionRepository = permissionRepository;
     }
 
+    @Transactional
     public Page<Role> findAll(int page, int size) {
         return roleRepository.findAll(PageRequest.of(page, size));
     }
 
+    @Transactional
     public Optional<Role> findById(Long id) {
         return roleRepository.findById(id);
     }
 
+    @Transactional
     public Role save(RoleDto dto) {
         Role role;
         if (dto.getId() != null) {
@@ -50,6 +54,7 @@ public class RoleService {
         return roleRepository.save(role);
     }
 
+    @Transactional
     public Role update(Long id, RoleDto dto) {
         Role role = roleRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Role not found"));
@@ -64,6 +69,7 @@ public class RoleService {
         return roleRepository.save(role);
     }
 
+    @Transactional
     public void delete(Long id) {
         roleRepository.deleteById(id);
     }

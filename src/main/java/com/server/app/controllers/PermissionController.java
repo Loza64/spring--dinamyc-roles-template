@@ -19,7 +19,7 @@ public class PermissionController {
     @GetMapping
     public ResponseEntity<PageResponse<Permission>> findAll(
             @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
-        var permissionsPage = permissionService.findAllPaginated(page, size);
+        var permissionsPage = permissionService.findAll(page, size);
         var response = new PageResponse<Permission>(
                 permissionsPage.getContent(),
                 permissionsPage.getNumber(),

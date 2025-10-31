@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.server.app.config.JsonWebToken;
 import com.server.app.dto.auth.UpdatePasswordDto;
@@ -24,8 +25,8 @@ public class UserService {
     private final JsonWebToken jwt;
     private final RoleRepository roleRepository;
 
-    public UserService(PasswordEncoder passwordEncoder, UserRepository userRepository, JsonWebToken jwt,
-            RoleRepository roleRepository) {
+    public UserService(PasswordEncoder passwordEncoder, UserRepository userRepository,
+            JsonWebToken jwt, RoleRepository roleRepository) {
         this.passwordEncoder = passwordEncoder;
         this.userRepository = userRepository;
         this.jwt = jwt;
@@ -44,10 +45,10 @@ public class UserService {
         return new AuthResponse(token, user);
     }
 
+    @Transactional
     public AuthResponse signUp(UserCreateDto dto) {
-        if (userRepository.findByUsername(dto.getUsername()).isPresent()) {
-            throw new RuntimeException("El username ya está en uso");
-        }
+        validateUniqueUsername(dto.getUsername(), null);
+        validateUniqueEmail(dto.getEmail(), null);
 
         User user = new User();
         user.setUsername(dto.getUsername());
@@ -61,8 +62,8 @@ public class UserService {
         user.setRole(defaultRole);
 
         userRepository.save(user);
-
         String token = jwt.createToken(user);
+
         return new AuthResponse(token, user);
     }
 
@@ -72,10 +73,10 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
     }
 
+    @Transactional
     public User create(UserCreateDto dto) {
-        if (userRepository.findByUsername(dto.getUsername()).isPresent()) {
-            throw new RuntimeException("El username ya está en uso");
-        }
+        validateUniqueUsername(dto.getUsername(), null);
+        validateUniqueEmail(dto.getEmail(), null);
 
         User user = new User();
         user.setUsername(dto.getUsername());
@@ -102,11 +103,13 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
     }
 
+    @Transactional
     public AuthResponse updateProfile(String token, UpdateProfileDto dto) {
         int userId = jwt.extractIdUser(token);
+        User existingUser = findById(userId);
 
-        User existingUser = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+        validateUniqueUsername(dto.getUsername(), userId);
+        validateUniqueEmail(dto.getEmail(), userId);
 
         existingUser.setUsername(dto.getUsername());
         existingUser.setName(dto.getName());
@@ -114,10 +117,10 @@ public class UserService {
         existingUser.setEmail(dto.getEmail());
 
         User updatedUser = userRepository.save(existingUser);
-
         return new AuthResponse(token, updatedUser);
     }
 
+    @Transactional
     public User updatePassword(String token, UpdatePasswordDto dto) {
         int id = jwt.extractIdUser(token);
         User user = findById(id);
@@ -138,15 +141,17 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    @Transactional
     public User updateUser(int userId, UserUpdateDto dto) {
         User user = findById(userId);
 
-        if (dto.getName() != null)
-            user.setName(dto.getName());
-        if (dto.getSurname() != null)
-            user.setSurname(dto.getSurname());
-        if (dto.getEmail() != null)
-            user.setEmail(dto.getEmail());
+        validateUniqueUsername(dto.getUsername(), userId);
+        validateUniqueEmail(dto.getEmail(), userId);
+
+        user.setUsername(dto.getUsername());
+        user.setName(dto.getName());
+        user.setSurname(dto.getSurname());
+        user.setEmail(dto.getEmail());
 
         if (dto.getRole() != null) {
             Role role = roleRepository.findById(dto.getRole())
@@ -155,5 +160,21 @@ public class UserService {
         }
 
         return userRepository.save(user);
+    }
+
+    private void validateUniqueUsername(String username, Integer currentUserId) {
+        userRepository.findByUsername(username).ifPresent(existing -> {
+            if (currentUserId == null || existing.getId() != currentUserId) {
+                throw new IllegalArgumentException("El nombre de usuario ya está en uso");
+            }
+        });
+    }
+
+    private void validateUniqueEmail(String email, Integer currentUserId) {
+        userRepository.findByEmail(email).ifPresent(existing -> {
+            if (currentUserId == null || existing.getId() != currentUserId) {
+                throw new IllegalArgumentException("El correo electrónico ya está en uso");
+            }
+        });
     }
 }

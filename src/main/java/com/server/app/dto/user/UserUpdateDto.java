@@ -1,6 +1,7 @@
 package com.server.app.dto.user;
 
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -8,13 +9,20 @@ import lombok.Data;
 @Data
 public class UserUpdateDto {
 
-    @Size(max = 100, message = "El nombre no puede superar 100 caracteres")
+    @NotBlank(message = "El nombre de usuario es obligatorio")
+    @Size(min = 3, max = 20, message = "El nombre de usuario debe tener entre 3 y 20 caracteres")
+    private String username;
+
+    @NotBlank(message = "El nombre es obligatorio")
+    @Size(max = 50, message = "El nombre no puede superar los 50 caracteres")
     private String name;
 
-    @Size(max = 100, message = "El apellido no puede superar 100 caracteres")
+    @NotBlank(message = "El apellido es obligatorio")
+    @Size(max = 50, message = "El apellido no puede superar los 50 caracteres")
     private String surname;
 
-    @Email(message = "Email no válido")
+    @NotBlank(message = "El correo electrónico es obligatorio")
+    @Email(message = "Debe proporcionar un correo electrónico válido")
     private String email;
 
     @Positive(message = "El roleId debe ser un número positivo")
