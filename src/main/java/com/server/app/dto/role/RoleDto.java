@@ -15,5 +15,5 @@ public class RoleDto {
     @Size(max = 50, message = "El nombre del rol no puede superar 50 caracteres")
     private String name;
 
-    private Set<Long> permissionIds;
+    private Set<Long> permissions;
 }

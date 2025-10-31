@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Table(name = "permissions")
+@Table(name = "permissions", uniqueConstraints = @UniqueConstraint(columnNames = { "path", "method" }))
 @Entity
 @Data
 @NoArgsConstructor
@@ -17,10 +17,12 @@ public class Permission {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column
+    @Column(nullable = false, unique = false)
     private String path;
 
-    @Column
+    @Column(nullable = false)
     private String method;
 
+    @Column(nullable = true)
+    private String title;
 }

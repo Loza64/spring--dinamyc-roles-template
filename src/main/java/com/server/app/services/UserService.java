@@ -1,11 +1,12 @@
-package com.server.app.services.impl;
+package com.server.app.services;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.server.app.config.JsonWebToken;
+import com.server.app.dto.auth.UpdatePasswordDto;
 import com.server.app.dto.response.AuthResponse;
 import com.server.app.dto.user.UserCreateDto;
 import com.server.app.dto.user.UserUpdateDto;
@@ -30,7 +31,6 @@ public class UserService {
         this.roleRepository = roleRepository;
     }
 
-    // 🔹 LOGIN
     public AuthResponse login(String username, String password) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
@@ -43,7 +43,6 @@ public class UserService {
         return new AuthResponse(token, user);
     }
 
-    // 🔹 SIGNUP con rol por defecto
     public AuthResponse signUp(UserCreateDto dto) {
         if (userRepository.findByUsername(dto.getUsername()).isPresent()) {
             throw new RuntimeException("El username ya está en uso");
@@ -56,7 +55,6 @@ public class UserService {
         user.setEmail(dto.getEmail());
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
 
-        // Asignar rol por defecto (ID 2)
         Role defaultRole = roleRepository.findById(2L)
                 .orElseThrow(() -> new RuntimeException("Rol por defecto no encontrado"));
         user.setRole(defaultRole);
@@ -65,6 +63,12 @@ public class UserService {
 
         String token = jwt.createToken(user);
         return new AuthResponse(token, user);
+    }
+
+    public User profile(String token) {
+        int id = jwt.extractIdUser(token);
+        return userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
     }
 
     public User create(UserCreateDto dto) {
@@ -79,9 +83,8 @@ public class UserService {
         user.setEmail(dto.getEmail());
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
 
-        // Asignar rol si se proporciona
-        if (dto.getRoleId() != null) {
-            Role role = roleRepository.findById(dto.getRoleId())
+        if (dto.getRole() != null) {
+            Role role = roleRepository.findById(dto.getRole())
                     .orElseThrow(() -> new RuntimeException("Rol no encontrado"));
             user.setRole(role);
         }
@@ -89,8 +92,8 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public List<User> findAll() {
-        return userRepository.findAll();
+    public Page<User> findAll(int page, int size) {
+        return userRepository.findAll(PageRequest.of(page, size));
     }
 
     public User findById(int id) {
@@ -98,18 +101,23 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
     }
 
-    // 🔹 Asignar un solo rol
-    public User assignRole(int userId, Long roleId) {
-        User user = findById(userId);
-        Role role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new RuntimeException("Rol no encontrado"));
-        user.setRole(role);
-        return userRepository.save(user);
-    }
+    public User updatePassword(String token, UpdatePasswordDto dto) {
+        int id = jwt.extractIdUser(token);
+        User user = findById(id);
 
-    public User updatePassword(int userId, String newPassword) {
-        User user = findById(userId);
-        user.setPassword(passwordEncoder.encode(newPassword));
+        if (!passwordEncoder.matches(dto.getOldpassword(), user.getPassword())) {
+            throw new IllegalArgumentException("La contraseña actual es incorrecta");
+        }
+
+        if (passwordEncoder.matches(dto.getNewpassword(), user.getPassword())) {
+            throw new IllegalArgumentException("La nueva contraseña no puede ser igual a la anterior");
+        }
+
+        if (!dto.getNewpassword().equals(dto.getConfirmpassword())) {
+            throw new IllegalArgumentException("Las contraseñas nuevas no coinciden");
+        }
+
+        user.setPassword(passwordEncoder.encode(dto.getNewpassword()));
         return userRepository.save(user);
     }
 
@@ -123,9 +131,8 @@ public class UserService {
         if (dto.getEmail() != null)
             user.setEmail(dto.getEmail());
 
-        // Actualizar rol si viene
-        if (dto.getRoleId() != null) {
-            Role role = roleRepository.findById(dto.getRoleId())
+        if (dto.getRole() != null) {
+            Role role = roleRepository.findById(dto.getRole())
                     .orElseThrow(() -> new RuntimeException("Rol no encontrado"));
             user.setRole(role);
         }

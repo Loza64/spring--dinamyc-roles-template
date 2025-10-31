@@ -40,6 +40,6 @@ public class User {
     }
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "role_id", nullable = false)
-    private Role role; // Un solo rol por usuario
+    @JoinColumn(name = "role_id", nullable = true)
+    private Role role;
 }

@@ -20,7 +20,7 @@ public class Role {
     private String name;
 
     @ManyToMany(fetch = FetchType.EAGER, cascade = { CascadeType.PERSIST, CascadeType.MERGE })
-    @JoinTable(name = "role_permissions", // nombre de la tabla intermedia
+    @JoinTable(name = "role_permissions", // tabla intermedia
             joinColumns = @JoinColumn(name = "role_id"), inverseJoinColumns = @JoinColumn(name = "permission_id"))
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
