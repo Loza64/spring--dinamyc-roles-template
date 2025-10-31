@@ -3,6 +3,7 @@ package com.server.app.controllers;
 import com.server.app.dto.auth.LoginDto;
 import com.server.app.dto.auth.UpdatePasswordDto;
 import com.server.app.dto.response.AuthResponse;
+import com.server.app.dto.user.UpdateProfileDto;
 import com.server.app.dto.user.UserCreateDto;
 import com.server.app.entities.User;
 import com.server.app.services.UserService;
@@ -40,6 +41,17 @@ public class AuthController {
 
         User user = userService.profile(token);
         return ResponseEntity.ok(user);
+    }
+
+    @PutMapping("/update/profile")
+    public ResponseEntity<AuthResponse> updaterofile(@RequestHeader("Authorization") String authHeader,
+            @RequestBody UpdateProfileDto dto) {
+        String token = authHeader.startsWith("Bearer ")
+                ? authHeader.substring(7)
+                : authHeader;
+
+        AuthResponse response = userService.updateProfile(token, dto);
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/update/password")

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.server.app.config.JsonWebToken;
 import com.server.app.dto.auth.UpdatePasswordDto;
 import com.server.app.dto.response.AuthResponse;
+import com.server.app.dto.user.UpdateProfileDto;
 import com.server.app.dto.user.UserCreateDto;
 import com.server.app.dto.user.UserUpdateDto;
 import com.server.app.entities.Role;
@@ -99,6 +100,22 @@ public class UserService {
     public User findById(int id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+    }
+
+    public AuthResponse updateProfile(String token, UpdateProfileDto dto) {
+        int userId = jwt.extractIdUser(token);
+
+        User existingUser = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+
+        existingUser.setUsername(dto.getUsername());
+        existingUser.setName(dto.getName());
+        existingUser.setSurname(dto.getSurname());
+        existingUser.setEmail(dto.getEmail());
+
+        User updatedUser = userRepository.save(existingUser);
+
+        return new AuthResponse(token, updatedUser);
     }
 
     public User updatePassword(String token, UpdatePasswordDto dto) {
