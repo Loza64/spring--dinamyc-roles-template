@@ -13,7 +13,9 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.server.app.config.JsonWebToken;
+import com.server.app.dto.response.ExceptionResponse;
 import com.server.app.entities.User;
 import com.server.app.services.UserService;
 
@@ -36,9 +38,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.userService = userService;
     }
 
-    /**
-     * Omitir el filtro para los endpoints de login y signup
-     */
+    // 🔹 Omitir el filtro para login y signup
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getRequestURI();
@@ -52,8 +52,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String authHeader = request.getHeader("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            sendError(response, HttpServletResponse.SC_UNAUTHORIZED,
-                    "Encabezado Authorization ausente o formato inválido. Se esperaba 'Bearer <token>'");
+            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Bearer token requerido");
             return;
         }
 
@@ -61,26 +60,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             if (jwtUtil.isTokenExpired(token)) {
-                sendError(response, HttpServletResponse.SC_UNAUTHORIZED, "El token ha expirado");
+                sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Token expirado");
                 return;
             }
 
             Claims claims = jwtUtil.extracClaims(token);
             if (claims == null) {
-                sendError(response, HttpServletResponse.SC_UNAUTHORIZED, "No se pudieron obtener los claims del token");
+                sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Token inválido o sin claims");
                 return;
             }
 
             Integer userId = jwtUtil.extractIdUser(token);
             if (userId == null) {
-                sendError(response, HttpServletResponse.SC_UNAUTHORIZED,
-                        "El token no contiene un ID de usuario válido");
+                sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED,
+                        "Token inválido: ID de usuario ausente");
                 return;
             }
 
             User user = userService.findById(userId);
             if (user == null) {
-                sendError(response, HttpServletResponse.SC_UNAUTHORIZED, "El usuario asociado al token no existe");
+                sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Tu cuenta ha sido eliminada");
                 return;
             }
 
@@ -90,30 +89,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().getName()));
 
-            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user, null,
-                    authorities);
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                    user, null, authorities);
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
+            filterChain.doFilter(request, response);
+
         } catch (ExpiredJwtException e) {
-            sendError(response, HttpServletResponse.SC_UNAUTHORIZED, "El token ha expirado");
-            return;
-
+            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Token expirado");
         } catch (JwtException e) {
-            sendError(response, HttpServletResponse.SC_UNAUTHORIZED, "Token inválido o manipulado");
-            return;
-
+            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Token inválido");
         } catch (Exception e) {
-            sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error interno en la autenticación");
-            return;
+            sendErrorResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error interno del servidor");
         }
-
-        filterChain.doFilter(request, response);
     }
 
-    private void sendError(HttpServletResponse response, int status, String message) throws IOException {
+    private void sendErrorResponse(HttpServletResponse response, int status, String message) throws IOException {
         response.setStatus(status);
         response.setContentType("application/json");
-        response.getWriter().write(String.format("{\"error\": \"%s\"}", message));
+        ExceptionResponse error = new ExceptionResponse(status, message);
+        String json = new ObjectMapper().writeValueAsString(error);
+        response.getWriter().write(json);
     }
 }

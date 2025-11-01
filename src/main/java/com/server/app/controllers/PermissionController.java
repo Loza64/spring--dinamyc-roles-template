@@ -1,6 +1,6 @@
 package com.server.app.controllers;
 
-import com.server.app.dto.response.PageResponse;
+import com.server.app.dto.response.Pagination;
 import com.server.app.entities.Permission;
 import com.server.app.services.PermissionService;
 import org.springframework.http.ResponseEntity;
@@ -17,10 +17,10 @@ public class PermissionController {
     }
 
     @GetMapping
-    public ResponseEntity<PageResponse<Permission>> findAll(
+    public ResponseEntity<Pagination<Permission>> findAll(
             @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
         var permissionsPage = permissionService.findAll(page, size);
-        var response = new PageResponse<Permission>(
+        var response = new Pagination<Permission>(
                 permissionsPage.getContent(),
                 permissionsPage.getNumber(),
                 permissionsPage.getSize(),

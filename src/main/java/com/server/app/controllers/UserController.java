@@ -2,7 +2,7 @@ package com.server.app.controllers;
 
 import com.server.app.dto.user.UserCreateDto;
 import com.server.app.dto.user.UserUpdateDto;
-import com.server.app.dto.response.PageResponse;
+import com.server.app.dto.response.Pagination;
 import com.server.app.entities.User;
 import com.server.app.services.UserService;
 
@@ -33,12 +33,12 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<PageResponse<User>> findAll(
+    public ResponseEntity<Pagination<User>> findAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
         Page<User> usersPage = userService.findAll(page, size);
-        PageResponse<User> response = new PageResponse<User>(
+        Pagination<User> response = new Pagination<User>(
                 usersPage.getContent(),
                 usersPage.getNumber(),
                 usersPage.getSize(),

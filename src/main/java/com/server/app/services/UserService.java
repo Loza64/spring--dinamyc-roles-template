@@ -14,6 +14,11 @@ import com.server.app.dto.user.UserCreateDto;
 import com.server.app.dto.user.UserUpdateDto;
 import com.server.app.entities.Role;
 import com.server.app.entities.User;
+import com.server.app.exceptions.ServerException;
+import com.server.app.exceptions.BadRequestException;
+import com.server.app.exceptions.ForbiddenException;
+import com.server.app.exceptions.NotFoundException;
+import com.server.app.exceptions.UnauthorizedException;
 import com.server.app.repositories.RoleRepository;
 import com.server.app.repositories.UserRepository;
 
@@ -35,10 +40,10 @@ public class UserService {
 
     public AuthResponse login(String username, String password) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new UnauthorizedException("Usuario no encontrado"));
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new RuntimeException("Contraseña incorrecta");
+            throw new UnauthorizedException("Contraseña incorrecta");
         }
 
         String token = jwt.createToken(user);
@@ -49,7 +54,6 @@ public class UserService {
     public AuthResponse signUp(UserCreateDto dto) {
         validateUniqueUsername(dto.getUsername(), null);
         validateUniqueEmail(dto.getEmail(), null);
-
         User user = new User();
         user.setUsername(dto.getUsername());
         user.setName(dto.getName());
@@ -70,14 +74,13 @@ public class UserService {
     public User profile(String token) {
         int id = jwt.extractIdUser(token);
         return userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new NotFoundException("Usuario no encontrado"));
     }
 
     @Transactional
     public User create(UserCreateDto dto) {
         validateUniqueUsername(dto.getUsername(), null);
         validateUniqueEmail(dto.getEmail(), null);
-
         User user = new User();
         user.setUsername(dto.getUsername());
         user.setName(dto.getName());
@@ -100,7 +103,7 @@ public class UserService {
 
     public User findById(int id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new NotFoundException("Usuario no encontrado"));
     }
 
     @Transactional
@@ -126,15 +129,15 @@ public class UserService {
         User user = findById(id);
 
         if (!passwordEncoder.matches(dto.getOldpassword(), user.getPassword())) {
-            throw new IllegalArgumentException("La contraseña actual es incorrecta");
+            throw new ForbiddenException("La contraseña actual es incorrecta");
         }
 
         if (passwordEncoder.matches(dto.getNewpassword(), user.getPassword())) {
-            throw new IllegalArgumentException("La nueva contraseña no puede ser igual a la anterior");
+            throw new BadRequestException("La nueva contraseña no puede ser igual a la anterior");
         }
 
         if (!dto.getNewpassword().equals(dto.getConfirmpassword())) {
-            throw new IllegalArgumentException("Las contraseñas nuevas no coinciden");
+            throw new BadRequestException("Las contraseñas nuevas no coinciden");
         }
 
         user.setPassword(passwordEncoder.encode(dto.getNewpassword()));
@@ -145,17 +148,27 @@ public class UserService {
     public User updateUser(int userId, UserUpdateDto dto) {
         User user = findById(userId);
 
-        validateUniqueUsername(dto.getUsername(), userId);
-        validateUniqueEmail(dto.getEmail(), userId);
+        if (dto.getUsername() != null && !dto.getUsername().isBlank()) {
+            validateUniqueUsername(dto.getUsername(), userId);
+            user.setUsername(dto.getUsername());
+        }
 
-        user.setUsername(dto.getUsername());
-        user.setName(dto.getName());
-        user.setSurname(dto.getSurname());
-        user.setEmail(dto.getEmail());
+        if (dto.getName() != null && !dto.getName().isBlank()) {
+            user.setName(dto.getName());
+        }
+
+        if (dto.getSurname() != null && !dto.getSurname().isBlank()) {
+            user.setSurname(dto.getSurname());
+        }
+
+        if (dto.getEmail() != null && !dto.getEmail().isBlank()) {
+            validateUniqueEmail(dto.getEmail(), userId);
+            user.setEmail(dto.getEmail());
+        }
 
         if (dto.getRole() != null) {
             Role role = roleRepository.findById(dto.getRole())
-                    .orElseThrow(() -> new RuntimeException("Rol no encontrado"));
+                    .orElseThrow(() -> new NotFoundException("Rol no encontrado"));
             user.setRole(role);
         }
 
@@ -165,7 +178,7 @@ public class UserService {
     private void validateUniqueUsername(String username, Integer currentUserId) {
         userRepository.findByUsername(username).ifPresent(existing -> {
             if (currentUserId == null || existing.getId() != currentUserId) {
-                throw new IllegalArgumentException("El nombre de usuario ya está en uso");
+                throw new ServerException("El nombre de usuario ya está en uso");
             }
         });
     }
@@ -173,7 +186,7 @@ public class UserService {
     private void validateUniqueEmail(String email, Integer currentUserId) {
         userRepository.findByEmail(email).ifPresent(existing -> {
             if (currentUserId == null || existing.getId() != currentUserId) {
-                throw new IllegalArgumentException("El correo electrónico ya está en uso");
+                throw new ServerException("El correo electrónico ya está en uso");
             }
         });
     }

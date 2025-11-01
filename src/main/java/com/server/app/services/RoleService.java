@@ -3,6 +3,7 @@ package com.server.app.services;
 import com.server.app.dto.role.RoleDto;
 import com.server.app.entities.Permission;
 import com.server.app.entities.Role;
+import com.server.app.exceptions.NotFoundException;
 import com.server.app.repositories.PermissionRepository;
 import com.server.app.repositories.RoleRepository;
 import org.springframework.data.domain.Page;
@@ -57,7 +58,7 @@ public class RoleService {
     @Transactional
     public Role update(Long id, RoleDto dto) {
         Role role = roleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Role not found"));
+                .orElseThrow(() -> new NotFoundException("Role not found"));
 
         role.setName(dto.getName());
 

@@ -1,6 +1,6 @@
 package com.server.app.controllers;
 
-import com.server.app.dto.response.PageResponse;
+import com.server.app.dto.response.Pagination;
 import com.server.app.dto.role.RoleDto;
 import com.server.app.entities.Role;
 import com.server.app.services.RoleService;
@@ -32,13 +32,13 @@ public class RoleController {
     }
 
     @GetMapping
-    public ResponseEntity<PageResponse<Role>> findAll(
+    public ResponseEntity<Pagination<Role>> findAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
         Page<Role> rolesPage = roleService.findAll(page, size);
 
-        PageResponse<Role> response = new PageResponse<Role>(
+        Pagination<Role> response = new Pagination<Role>(
                 rolesPage.getContent(),
                 rolesPage.getNumber(),
                 rolesPage.getSize(),

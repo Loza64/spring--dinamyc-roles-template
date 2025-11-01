@@ -8,6 +8,8 @@ import com.server.app.dto.user.UserCreateDto;
 import com.server.app.entities.User;
 import com.server.app.services.UserService;
 
+import jakarta.validation.Valid;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,13 +24,13 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginDto body) {
+    public ResponseEntity<AuthResponse> login(@RequestBody @Valid LoginDto body) {
         AuthResponse response = userService.login(body.getUsername(), body.getPassword());
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<AuthResponse> signUp(@RequestBody UserCreateDto body) {
+    public ResponseEntity<AuthResponse> signUp(@RequestBody @Valid UserCreateDto body) {
         AuthResponse response = userService.signUp(body);
         return ResponseEntity.ok(response);
     }
