@@ -14,8 +14,8 @@ import com.server.app.dto.user.UserCreateDto;
 import com.server.app.dto.user.UserUpdateDto;
 import com.server.app.entities.Role;
 import com.server.app.entities.User;
-import com.server.app.exceptions.ServerException;
 import com.server.app.exceptions.BadRequestException;
+import com.server.app.exceptions.ConfictException;
 import com.server.app.exceptions.ForbiddenException;
 import com.server.app.exceptions.NotFoundException;
 import com.server.app.exceptions.UnauthorizedException;
@@ -52,8 +52,8 @@ public class UserService {
 
     @Transactional
     public AuthResponse signUp(UserCreateDto dto) {
-        validateUniqueUsername(dto.getUsername(), null);
-        validateUniqueEmail(dto.getEmail(), null);
+        uniqueUsername(dto.getUsername(), null);
+        uniqueEmail(dto.getEmail(), null);
         User user = new User();
         user.setUsername(dto.getUsername());
         user.setName(dto.getName());
@@ -62,7 +62,8 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
 
         Role defaultRole = roleRepository.findById(2L)
-                .orElseThrow(() -> new RuntimeException("Rol por defecto no encontrado"));
+                .orElseThrow(() -> new NotFoundException(
+                        "Rol por defecto no encontrado, verifica que el rol este registrado en al base de datos"));
         user.setRole(defaultRole);
 
         userRepository.save(user);
@@ -79,8 +80,8 @@ public class UserService {
 
     @Transactional
     public User create(UserCreateDto dto) {
-        validateUniqueUsername(dto.getUsername(), null);
-        validateUniqueEmail(dto.getEmail(), null);
+        uniqueUsername(dto.getUsername(), null);
+        uniqueEmail(dto.getEmail(), null);
         User user = new User();
         user.setUsername(dto.getUsername());
         user.setName(dto.getName());
@@ -110,15 +111,12 @@ public class UserService {
     public AuthResponse updateProfile(String token, UpdateProfileDto dto) {
         int userId = jwt.extractIdUser(token);
         User existingUser = findById(userId);
-
-        validateUniqueUsername(dto.getUsername(), userId);
-        validateUniqueEmail(dto.getEmail(), userId);
-
+        uniqueEmail(dto.getEmail(), userId);
+        uniqueUsername(dto.getUsername(), userId);
         existingUser.setUsername(dto.getUsername());
         existingUser.setName(dto.getName());
         existingUser.setSurname(dto.getSurname());
         existingUser.setEmail(dto.getEmail());
-
         User updatedUser = userRepository.save(existingUser);
         return new AuthResponse(token, updatedUser);
     }
@@ -149,7 +147,7 @@ public class UserService {
         User user = findById(userId);
 
         if (dto.getUsername() != null && !dto.getUsername().isBlank()) {
-            validateUniqueUsername(dto.getUsername(), userId);
+            uniqueUsername(dto.getUsername(), userId);
             user.setUsername(dto.getUsername());
         }
 
@@ -162,7 +160,7 @@ public class UserService {
         }
 
         if (dto.getEmail() != null && !dto.getEmail().isBlank()) {
-            validateUniqueEmail(dto.getEmail(), userId);
+            uniqueEmail(dto.getEmail(), userId);
             user.setEmail(dto.getEmail());
         }
 
@@ -175,18 +173,18 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    private void validateUniqueUsername(String username, Integer currentUserId) {
+    private void uniqueUsername(String username, Integer id) {
         userRepository.findByUsername(username).ifPresent(existing -> {
-            if (currentUserId == null || existing.getId() != currentUserId) {
-                throw new ServerException("El nombre de usuario ya está en uso");
+            if (id == null || existing.getId() != id) {
+                throw new ConfictException("El nombre de usuario ya está en uso");
             }
         });
     }
 
-    private void validateUniqueEmail(String email, Integer currentUserId) {
+    private void uniqueEmail(String email, Integer id) {
         userRepository.findByEmail(email).ifPresent(existing -> {
-            if (currentUserId == null || existing.getId() != currentUserId) {
-                throw new ServerException("El correo electrónico ya está en uso");
+            if (id == null || existing.getId() != id) {
+                throw new ConfictException("El correo electrónico ya está en uso");
             }
         });
     }
