@@ -1,12 +1,14 @@
+version: "3.9"
+
 services:
   postgres:
     image: postgres:16
     container_name: postgres-db
     restart: always
     environment:
-      POSTGRES_DB: spring
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: PackCode*503
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5433:5432"
     volumes:
@@ -20,14 +22,14 @@ services:
     depends_on:
       - postgres
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/spring
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: PackCode*503
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      SPRING_JPA_SHOW_SQL: "true"
-      SERVER_PORT: 4000
-      SECURITY_JWT_SECRET_KEY: 3cfa76ef14937c1c0ea519f8fc057a80fcd04a7420f8e8bcd0a7567c272e007b
-      SECURITY_JWT_EXPIRATION_TIME: 3600000
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
+      SPRING_JPA_SHOW_SQL: ${SPRING_JPA_SHOW_SQL}
+      SERVER_PORT: ${SERVER_PORT}
+      SECURITY_JWT_SECRET_KEY: ${SECURITY_JWT_SECRET_KEY}
+      SECURITY_JWT_EXPIRATION_TIME: ${SECURITY_JWT_EXPIRATION_TIME}
     ports:
       - "4000:4000"
     networks:
