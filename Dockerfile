@@ -8,7 +8,7 @@ WORKDIR /app
 COPY target/*.jar app.jar
 
 # puerto
-EXPOSE 8080
+EXPOSE 4000
 
 # comando
 ENTRYPOINT ["java", "-jar", "app.jar"]

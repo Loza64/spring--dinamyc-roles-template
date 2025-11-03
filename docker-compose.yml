@@ -25,11 +25,11 @@ services:
       SPRING_DATASOURCE_PASSWORD: PackCode*503
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_SHOW_SQL: "true"
-      #SERVER_PORT: 4000
+      SERVER_PORT: 4000
       SECURITY_JWT_SECRET_KEY: 3cfa76ef14937c1c0ea519f8fc057a80fcd04a7420f8e8bcd0a7567c272e007b
       SECURITY_JWT_EXPIRATION_TIME: 3600000
     ports:
-      - "4000:8080"
+      - "4000:4000"
     networks:
       - spring-net
     restart: always
