@@ -4,13 +4,11 @@ import com.server.app.services.PermissionService;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
-import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
-import org.springframework.web.util.pattern.PathPattern;
 
-import java.util.Map;
-import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 public class SaveEndpoints implements ApplicationListener<ApplicationReadyEvent> {
@@ -25,27 +23,32 @@ public class SaveEndpoints implements ApplicationListener<ApplicationReadyEvent>
 
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
+        handlerMapping.getHandlerMethods()
+                .forEach((info, method) -> getPaths(info).forEach(path -> processEndpoint(path, info)));
+    }
 
-        handlerMapping.getHandlerMethods().forEach((info, method) -> {
-            Optional.ofNullable(info.getPathPatternsCondition()).ifPresentOrElse(
-                    condition -> condition.getPatterns()
-                            .forEach(p -> processEndpoint(p.getPatternString(), info)),
-                    () -> Optional.ofNullable(info.getPatternsCondition())
-                            .ifPresent(condition -> condition.getPatterns()
-                                    .forEach(path -> processEndpoint(path, info))));
-        });
+    private Set<String> getPaths(RequestMappingInfo info) {
+        if (info.getPathPatternsCondition() != null) {
+            return info.getPathPatternsCondition()
+                    .getPatterns() // Set<PathPattern>
+                    .stream()
+                    .map(Object::toString) // Convertimos PathPattern a String
+                    .collect(Collectors.toSet());
+        } else if (info.getPatternsCondition() != null) {
+            return info.getPatternsCondition().getPatterns();
+        }
+        return Set.of();
     }
 
     private void processEndpoint(String path, RequestMappingInfo info) {
-        if (path.equals("/error") || path.equals("/api/auth/login") || path.equals("/api/auth/signup")) {
+        if (Set.of("/error", "/api/auth/login", "/api/auth/signup").contains(path))
             return;
-        }
 
-        if (info.getMethodsCondition().getMethods().isEmpty()) {
+        var methods = info.getMethodsCondition().getMethods();
+        if (methods.isEmpty()) {
             permissionService.createIfNotExists(path, "GET");
         } else {
-            info.getMethodsCondition().getMethods()
-                    .forEach(method -> permissionService.createIfNotExists(path, method.name()));
+            methods.forEach(method -> permissionService.createIfNotExists(path, method.name()));
         }
     }
 }
