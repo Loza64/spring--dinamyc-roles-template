@@ -38,20 +38,13 @@ public class RoleService {
 
     @Transactional
     public Role save(RoleDto dto) {
-        Role role;
-        if (dto.getId() != null) {
-            role = roleRepository.findById(dto.getId()).orElse(new Role());
-        } else {
-            role = new Role();
-        }
-
+        Role role = new Role();
         role.setName(dto.getName());
 
         if (dto.getPermissions() != null && !dto.getPermissions().isEmpty()) {
             Set<Permission> permissions = new HashSet<>(permissionRepository.findAllById(dto.getPermissions()));
             role.setPermissions(permissions);
         }
-
         return roleRepository.save(role);
     }
 
