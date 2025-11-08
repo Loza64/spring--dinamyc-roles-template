@@ -126,6 +126,24 @@ psql -U <usuario> -d <basededatos> -f script.sql
 }
 ```
 ----
+- ***POST*** :http://localhost:4000/users
+
+- ***Bearer 'token'***
+```
+{
+    "username": "johndoe",
+    "name": "John",
+    "surname": "Doe",
+    "email": "johndoe@example.com",
+    "password": "Password123",
+    "role": 1
+}
+```
+----
+- ***GET*** :http://localhost:4000/api/users?page=0&size=1
+
+- ***Bearer 'token'***
+----
 - ***POST*** :http://localhost:4000/api/roles
 
 - ***Bearer 'token'***
@@ -147,7 +165,7 @@ psql -U <usuario> -d <basededatos> -f script.sql
 - ***Bearer 'token'***
 
 ----
-- ***GET*** :http://localhost:4000/api/permissions
+- ***GET*** :http://localhost:4000/api/permissions?page=0&size=1
 
 - ***Bearer 'token'***
 
