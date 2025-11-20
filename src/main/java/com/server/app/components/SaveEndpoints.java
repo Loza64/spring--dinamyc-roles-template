@@ -30,9 +30,9 @@ public class SaveEndpoints implements ApplicationListener<ApplicationReadyEvent>
     private Set<String> getPaths(RequestMappingInfo info) {
         if (info.getPathPatternsCondition() != null) {
             return info.getPathPatternsCondition()
-                    .getPatterns() // Set<PathPattern>
+                    .getPatterns()
                     .stream()
-                    .map(Object::toString) // Convertimos PathPattern a String
+                    .map(Object::toString)
                     .collect(Collectors.toSet());
         } else if (info.getPatternsCondition() != null) {
             return info.getPatternsCondition().getPatterns();
@@ -41,7 +41,7 @@ public class SaveEndpoints implements ApplicationListener<ApplicationReadyEvent>
     }
 
     private void processEndpoint(String path, RequestMappingInfo info) {
-        if (Set.of("/error", "/api/auth/login", "/api/auth/signup").contains(path))
+        if (Set.of("/error", "/api/auth/login", "/api/auth/signup", "/api/auth/profile").contains(path))
             return;
 
         var methods = info.getMethodsCondition().getMethods();
