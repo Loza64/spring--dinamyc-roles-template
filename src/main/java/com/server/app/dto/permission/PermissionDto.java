@@ -7,13 +7,8 @@ import lombok.Data;
 @Data
 public class PermissionDto {
 
-    private Long id;
-
-    @NotBlank(message = "El path es obligatorio")
+    @NotBlank(message = "El titulo es obligatorio")
     @Size(max = 255, message = "El path no puede superar 255 caracteres")
-    private String path;
+    private String title;
 
-    @NotBlank(message = "El método HTTP es obligatorio")
-    @Size(max = 10, message = "El método HTTP no puede superar 10 caracteres")
-    private String method; // GET, POST, PUT, DELETE
 }

@@ -1,6 +1,8 @@
 package com.server.app.services;
 
+import com.server.app.dto.permission.PermissionDto;
 import com.server.app.entities.Permission;
+import com.server.app.exceptions.NotFoundException;
 import com.server.app.repositories.PermissionRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -24,8 +26,10 @@ public class PermissionService {
     }
 
     @Transactional
-    public Optional<Permission> findById(Long id) {
-        return permissionRepository.findById(id);
+    public Permission findById(Long id) {
+        Permission permission = permissionRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Permission not found " + id));
+        return permission;
     }
 
     @Transactional
@@ -38,4 +42,13 @@ public class PermissionService {
             permissionRepository.save(permission);
         }
     }
+
+    @Transactional
+    public Permission update(Long id, PermissionDto dto) {
+        Permission permission = permissionRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Permission not found " + id));
+        permission.setTitle(dto.getTitle());
+        return permissionRepository.save(permission);
+    }
+
 }
