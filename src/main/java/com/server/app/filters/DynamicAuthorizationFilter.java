@@ -26,25 +26,20 @@ public class DynamicAuthorizationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        try {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-            if (authentication != null && authentication.isAuthenticated()) {
-                String method = request.getMethod();
-                String path = request.getRequestURI();
+        if (authentication != null && authentication.isAuthenticated()) {
+            String method = request.getMethod();
+            String path = request.getRequestURI();
 
-                if (!isAuthorized(authentication, method, path)) {
-                    sendError(response, HttpServletResponse.SC_FORBIDDEN,
-                            "Acceso denegado: no tienes permisos para esta ruta: " + path);
-                    return;
-                }
+            if (!isAuthorized(authentication, method, path)) {
+                sendError(response, HttpServletResponse.SC_FORBIDDEN,
+                        "Acceso denegado: no tienes permisos para esta ruta: " + path);
+                return;
             }
-
-            filterChain.doFilter(request, response);
-        } catch (Exception ex) {
-            sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    "Error interno en el filtro de autorización");
         }
+
+        filterChain.doFilter(request, response);
     }
 
     private boolean isAuthorized(Authentication authentication, String method, String path) {
@@ -58,15 +53,21 @@ public class DynamicAuthorizationFilter extends OncePerRequestFilter {
             String authMethod = parts[0];
             String authPath = parts[1];
 
-            return method.equals(authMethod) && pathMatcher.match(authPath, path);
+            return method.equalsIgnoreCase(authMethod) &&
+                    pathMatcher.match(authPath, path);
         });
     }
 
     private void sendError(HttpServletResponse response, int status, String message) throws IOException {
+        if (response.isCommitted())
+            return;
+
         response.setStatus(status);
-        response.setContentType("application/json");
+        response.setContentType("application/json;charset=UTF-8");
 
         ExceptionResponse error = new ExceptionResponse(status, message);
-        response.getWriter().write(objectMapper.writeValueAsString(error));
+        String payload = objectMapper.writeValueAsString(error);
+
+        response.getWriter().write(payload);
     }
 }
