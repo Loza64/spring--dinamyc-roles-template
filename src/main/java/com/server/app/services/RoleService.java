@@ -1,5 +1,7 @@
 package com.server.app.services;
 
+import com.server.app.dto.permission.AssingPermissionDto;
+import com.server.app.dto.permission.PermissionDto;
 import com.server.app.dto.role.RoleDto;
 import com.server.app.entities.Permission;
 import com.server.app.entities.Role;
@@ -12,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -40,9 +44,13 @@ public class RoleService {
     public Role save(RoleDto dto) {
         Role role = new Role();
         role.setName(dto.getName());
-
         if (dto.getPermissions() != null && !dto.getPermissions().isEmpty()) {
-            Set<Permission> permissions = new HashSet<>(permissionRepository.findAllById(dto.getPermissions()));
+            List<Long> ids = dto.getPermissions()
+                    .stream()
+                    .map(AssingPermissionDto::getId)
+                    .filter(Objects::nonNull)
+                    .toList();
+            Set<Permission> permissions = new HashSet<>(permissionRepository.findAllById(ids));
             role.setPermissions(permissions);
         }
         return roleRepository.save(role);
@@ -50,16 +58,17 @@ public class RoleService {
 
     @Transactional
     public Role update(Long id, RoleDto dto) {
-        Role role = roleRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Role not found"));
-
+        Role role = roleRepository.findById(id).orElseThrow(() -> new NotFoundException("Role not found"));
         role.setName(dto.getName());
-
-        if (dto.getPermissions() != null) {
-            Set<Permission> permissions = new HashSet<>(permissionRepository.findAllById(dto.getPermissions()));
+        if (dto.getPermissions() != null && !dto.getPermissions().isEmpty()) {
+            List<Long> ids = dto.getPermissions()
+                    .stream()
+                    .map(AssingPermissionDto::getId)
+                    .filter(Objects::nonNull)
+                    .toList();
+            Set<Permission> permissions = new HashSet<>(permissionRepository.findAllById(ids));
             role.setPermissions(permissions);
         }
-
         return roleRepository.save(role);
     }
 

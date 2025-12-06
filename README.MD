@@ -122,7 +122,7 @@ psql -U <usuario> -d <basededatos> -f script.sql
 ```
 {
   "name": "ADMIN",
-  "permissions": [1, 2, 3, 4]
+  "permissions": [{id:1}, {id:2}, {id:3}, {id:4}]
 }
 ```
 ----
@@ -151,7 +151,7 @@ psql -U <usuario> -d <basededatos> -f script.sql
 ```
 {
   "name": "ADMIN",
-  "permissions": [1, 2, 3, 4]
+  "permissions": [{id:1}, {id:2}, {id:3}, {id:4}]
 }
 ```
 ----
