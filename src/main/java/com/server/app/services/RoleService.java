@@ -1,7 +1,6 @@
 package com.server.app.services;
 
 import com.server.app.dto.permission.AssingPermissionDto;
-import com.server.app.dto.permission.PermissionDto;
 import com.server.app.dto.role.RoleDto;
 import com.server.app.entities.Permission;
 import com.server.app.entities.Role;
