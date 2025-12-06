@@ -52,7 +52,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String authHeader = request.getHeader("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Bearer token requerido");
+            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Bearer token required");
             return;
         }
 
@@ -60,26 +60,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             if (jwtUtil.isTokenExpired(token)) {
-                sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Token expirado");
+                sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Token expired");
                 return;
             }
 
             Claims claims = jwtUtil.extracClaims(token);
             if (claims == null) {
-                sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Token inválido o sin claims");
+                sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Invalid token data");
                 return;
             }
 
             Integer userId = jwtUtil.extractIdUser(token);
             if (userId == null) {
                 sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED,
-                        "Token inválido: ID de usuario ausente");
+                        "Token data invalid");
                 return;
             }
 
             User user = userService.findById(userId);
             if (user == null) {
-                sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Tu cuenta ha sido eliminada");
+                sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Your account has been deleted");
+                return;
+            }
+
+            if (user.isBlocked()) {
+                sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Your account has been blocked");
                 return;
             }
 

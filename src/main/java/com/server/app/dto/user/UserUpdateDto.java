@@ -25,4 +25,6 @@ public class UserUpdateDto {
 
     @Positive(message = "El roleId debe ser un número positivo")
     private Long role;
+
+    private Boolean blocked;
 }

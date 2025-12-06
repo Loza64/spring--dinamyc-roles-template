@@ -42,6 +42,10 @@ public class UserService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UnauthorizedException("Usuario no encontrado"));
 
+        if (user.isBlocked()) {
+            throw new UnauthorizedException("Your account has been blocked");
+        }
+
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new UnauthorizedException("Contraseña incorrecta");
         }
@@ -74,8 +78,11 @@ public class UserService {
 
     public User profile(String token) {
         int id = jwt.extractIdUser(token);
-        return userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Usuario no encontrado"));
+        User user = userRepository.findById(id).orElseThrow(() -> new NotFoundException("Usuario no encontrado"));
+        if (user.isBlocked()) {
+            throw new UnauthorizedException("Your account has been blocked");
+        }
+        return user;
     }
 
     @Transactional
@@ -110,14 +117,19 @@ public class UserService {
     @Transactional
     public AuthResponse updateProfile(String token, UpdateProfileDto dto) {
         int userId = jwt.extractIdUser(token);
-        User existingUser = findById(userId);
+        User user = findById(userId);
+
+        if (user.isBlocked()) {
+            throw new UnauthorizedException("Your account has been blocked");
+        }
+
         uniqueEmail(dto.getEmail(), userId);
         uniqueUsername(dto.getUsername(), userId);
-        existingUser.setUsername(dto.getUsername());
-        existingUser.setName(dto.getName());
-        existingUser.setSurname(dto.getSurname());
-        existingUser.setEmail(dto.getEmail());
-        User updatedUser = userRepository.save(existingUser);
+        user.setUsername(dto.getUsername());
+        user.setName(dto.getName());
+        user.setSurname(dto.getSurname());
+        user.setEmail(dto.getEmail());
+        User updatedUser = userRepository.save(user);
         return new AuthResponse(token, updatedUser);
     }
 
@@ -125,6 +137,10 @@ public class UserService {
     public User updatePassword(String token, UpdatePasswordDto dto) {
         int id = jwt.extractIdUser(token);
         User user = findById(id);
+
+        if (user.isBlocked()) {
+            throw new UnauthorizedException("Your account is blocked");
+        }
 
         if (!passwordEncoder.matches(dto.getOldpassword(), user.getPassword())) {
             throw new ForbiddenException("La contraseña actual es incorrecta");
@@ -146,6 +162,10 @@ public class UserService {
     public User updateUser(int userId, UserUpdateDto dto) {
         User user = findById(userId);
 
+        if (user.isBlocked()) {
+            throw new ConfictException("The user: " + user.getUsername() + " is locked");
+        }
+
         if (dto.getUsername() != null && !dto.getUsername().isBlank()) {
             uniqueUsername(dto.getUsername(), userId);
             user.setUsername(dto.getUsername());
@@ -162,6 +182,10 @@ public class UserService {
         if (dto.getEmail() != null && !dto.getEmail().isBlank()) {
             uniqueEmail(dto.getEmail(), userId);
             user.setEmail(dto.getEmail());
+        }
+
+        if (dto.getBlocked() != null) {
+            user.setBlocked(dto.getBlocked());
         }
 
         if (dto.getRole() != null) {

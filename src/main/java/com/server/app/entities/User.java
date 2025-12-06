@@ -2,6 +2,8 @@ package com.server.app.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
+
+import org.hibernate.annotations.ColumnDefault;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @Table(name = "users")
@@ -30,6 +32,11 @@ public class User {
 
     @Column(nullable = false)
     private String password;
+
+    @Column(nullable = false)
+    @ColumnDefault("false")
+    @Builder.Default
+    private boolean blocked = false;
 
     @PrePersist
     @PreUpdate
